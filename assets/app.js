@@ -68,6 +68,9 @@
 
   const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9#]/g, '');
 
+  /** Google's CSV export renders whole numbers as "42.0" — undo that. */
+  const clean = (v) => String(v ?? '').trim().replace(/^(-?\d+)\.0+$/, '$1');
+
   /** Work out which column is the prize and which is the ticket. */
   function pickColumns(table) {
     const head = table[0] || [];
@@ -88,7 +91,7 @@
     const { prize, ticket, body } = pickColumns(table);
 
     return body
-      .map(r => ({ prize:(r[prize] || '').trim(), ticket:(r[ticket] || '').trim() }))
+      .map(r => ({ prize:clean(r[prize]), ticket:clean(r[ticket]) }))
       .filter(w => w.prize !== '' && w.ticket !== '')
       .sort((a, b) => {
         const na = Number(a.prize), nb = Number(b.prize);

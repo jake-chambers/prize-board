@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scan to see if you won</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F6F0E1'/%3E%3Ctext x='16' y='24' font-size='24' text-anchor='middle' fill='%23C0272D'%3E%E2%98%85%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  .poster{ max-width:600px; margin:0 auto; padding:26px 22px 30px; text-align:center; }
+  .poster h1{
+    font-family:var(--display); font-weight:400; text-transform:uppercase;
+    font-size:clamp(52px,14vw,92px); line-height:.86; margin:14px 0 0;
+    text-shadow:2px 2px 0 rgba(192,39,45,.16);
+  }
+  .poster .lede{
+    font-weight:700; letter-spacing:.15em; text-transform:uppercase;
+    font-size:clamp(13px,3.6vw,17px); margin:0;
+  }
+  .qrbox{
+    margin:20px auto 0; width:min(78vw,340px); aspect-ratio:1;
+    display:grid; place-items:center; padding:16px;
+    border:3px solid var(--ink); border-radius:12px;
+    box-shadow:inset 0 0 0 3px var(--paper), inset 0 0 0 5px var(--ink-30);
+    background:var(--paper);
+  }
+  .qrbox canvas, .qrbox img{ width:100%; height:auto; image-rendering:pixelated; }
+  .qrbox--pending{ font-weight:600; letter-spacing:.1em; text-transform:uppercase; font-size:13px; }
+  .url{
+    margin:16px auto 0; word-break:break-all;
+    font-weight:600; font-size:clamp(12px,3.3vw,15px); letter-spacing:.04em;
+  }
+  .steps{
+    margin:20px 0 0; padding:0; list-style:none;
+    display:grid; gap:9px; text-align:left;
+  }
+  .steps li{
+    display:flex; align-items:center; gap:11px;
+    font-weight:600; text-transform:uppercase; letter-spacing:.06em;
+    font-size:clamp(13px,3.5vw,16px); line-height:1.25;
+  }
+  .steps b{
+    flex:0 0 auto; width:1.9em; height:1.9em; display:grid; place-items:center;
+    border:2.5px solid var(--ink); border-radius:50%;
+    font-family:var(--display); font-weight:400; font-size:.95em;
+  }
+  .noprint{ margin-top:22px; }
+  @media print{
+    @page{ margin:12mm; }
+    .noprint,.grain{ display:none !important; }
+    .sheet::before{ display:none !important; }
+    body{ background:#fff; }
+    .qrbox{ width:82mm; }
+  }
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<main class="sheet">
+  <div class="poster">
+    <div class="rule rule--double"></div>
+
+    <p class="lede" style="margin-top:16px">★ &nbsp;Prize Draw Results&nbsp; ★</p>
+    <h1>Scan to<br>see if<br>you won</h1>
+
+    <div class="starline"><span></span>★<span></span></div>
+
+    <div class="qrbox qrbox--pending" id="qrbox">Building code…</div>
+
+    <p class="url" id="url"></p>
+
+    <div class="starline"><span></span>★<span></span></div>
+
+    <ol class="steps">
+      <li><b>1</b> Point your camera at the code</li>
+      <li><b>2</b> Type in your ticket number</li>
+      <li><b>3</b> Winners come see us to collect</li>
+    </ol>
+
+    <div class="rule rule--double" style="margin-top:22px"></div>
+
+    <p class="noprint">
+      <button class="foot__refresh" onclick="window.print()">Print this page</button>
+      <a class="foot__refresh" id="dl" download="prize-board-qr.png"
+         style="text-decoration:none; display:inline-block; margin-left:8px">Download PNG</a>
+    </p>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script>
+(() => {
+  // Encode the board URL as it actually is — so this poster stays correct
+  // even if the site moves to a custom domain.
+  const target = new URL('./', location.href).href;
+  document.getElementById('url').textContent = target.replace(/^https?:\/\//, '');
+
+  const box = document.getElementById('qrbox');
+  if (typeof QRious === 'undefined') {
+    box.textContent = 'Open this page with internet access to draw the code.';
+    return;
+  }
+
+  const canvas = document.createElement('canvas');
+  new QRious({
+    element: canvas,
+    value: target,
+    size: 1200,            // big enough that print stays crisp
+    level: 'M',            // error correction: reads reliably, stays coarse
+    padding: 0,
+    background: '#F6F0E1',
+    foreground: '#C0272D',
+  });
+
+  box.classList.remove('qrbox--pending');
+  box.replaceChildren(canvas);
+  document.getElementById('dl').href = canvas.toDataURL('image/png');
+})();
+</script>
+</body>
+</html>
