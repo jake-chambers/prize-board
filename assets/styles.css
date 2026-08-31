@@ -151,6 +151,7 @@ body{
   color:var(--ink); font-size:14px; line-height:1; cursor:pointer;
   display:grid; place-items:center;
 }
+.checker__clear[hidden]{ display:none; }
 
 /* Verdict card */
 .verdict{ margin-top:14px; }
