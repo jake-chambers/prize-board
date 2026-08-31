@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prize Winners</title>
+<meta name="description" content="Live board of winning ticket numbers.">
+<meta name="theme-color" content="#C0272D">
+<meta name="color-scheme" content="light only">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F6F0E1'/%3E%3Ctext x='16' y='24' font-size='24' text-anchor='middle' fill='%23C0272D'%3E%E2%98%85%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<main class="sheet">
+
+  <header class="masthead">
+    <div class="rule rule--double"></div>
+    <p class="kicker" id="kicker">★ &nbsp;Prize Draw&nbsp; ★</p>
+    <h1 class="masthead__title" id="title">Prize<br>Winners</h1>
+    <div class="starline"><span></span>★<span></span></div>
+    <p class="masthead__sub" id="subtitle">Check your ticket number below</p>
+    <div class="rule rule--double"></div>
+  </header>
+
+  <!-- ── Ticket checker ─────────────────────────────────────── -->
+  <section class="panel checker" aria-labelledby="checker-label">
+    <label class="checker__label" id="checker-label" for="ticket">Enter your ticket number</label>
+    <div class="checker__field">
+      <input id="ticket" type="text" inputmode="numeric" autocomplete="off"
+             enterkeyhint="search" placeholder="0000" aria-describedby="verdict"
+             maxlength="12" spellcheck="false">
+      <button id="clear" class="checker__clear" type="button" aria-label="Clear" hidden>✕</button>
+    </div>
+    <div id="verdict" class="verdict" role="status" aria-live="polite"></div>
+  </section>
+
+  <!-- ── The board ──────────────────────────────────────────── -->
+  <section class="board" aria-labelledby="board-heading">
+    <h2 class="board__heading" id="board-heading">
+      <span>Prize</span>
+      <em id="count"></em>
+      <span>Ticket</span>
+    </h2>
+
+    <div class="board__body">
+      <ol id="rows" class="rows" aria-live="polite"></ol>
+      <p id="state" class="state">Loading the board…</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="rule rule--double"></div>
+    <p class="foot__status">
+      <span id="stamp">—</span>
+      <button id="refresh" type="button" class="foot__refresh">Refresh now</button>
+    </p>
+    <p class="foot__note">This page updates on its own. Leave it open.</p>
+  </footer>
+
+</main>
+
+<script src="config.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
