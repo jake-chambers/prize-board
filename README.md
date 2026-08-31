@@ -1,8 +1,8 @@
 # Prize Board
 
 A static, phone-first board of winning ticket numbers. Guests scan a QR code,
-land on the page, type their ticket number, and immediately see whether it was
-drawn. No login, no app, no Google account.
+type their ticket number, and immediately see whether it was drawn. No login,
+no app, no account — for them or for you, once it's set up.
 
 **Live:** https://jake-chambers.github.io/prize-board/
 **QR poster:** https://jake-chambers.github.io/prize-board/qr.html
@@ -11,79 +11,125 @@ drawn. No login, no app, no Google account.
 
 ## How it works
 
-`index.html` is plain HTML/CSS/JS served by GitHub Pages. On load — and every
-20 seconds after — it fetches a CSV of `prize, ticket` pairs from whatever URL
-`config.js` names, and redraws the board. There is no server and no database.
+You type winners into a Google Sheet. Guests' phones read that sheet directly
+and redraw the board every 20 seconds. There is no server and no database.
 
 ```
-Google Sheet (you edit)  ──CSV over HTTPS──▶  guest's phone
+   You                     Google Sheet              Guest's phone
+   ───                     ────────────              ─────────────
+   type prize + ticket ──▶  prize │ ticket  ──CSV──▶  the board
+                            1     │ 10428             updates itself
+                            2     │ 10093             every 20s
 ```
+
+Guests never see Google. They see the board, and they never have to sign in
+to anything.
+
+---
+
+## One-time setup
+
+**1. Make the sheet.** A new Google Sheet, two columns, headers in row 1:
+
+| prize | ticket |
+|-------|--------|
+| 1     | 10428  |
+| 2     | 10093  |
+
+Name the tab `Winners` (bottom-left). Keep the header row even when the sheet
+is otherwise empty.
+
+**2. Share it so the board can read it.**
+**Share → General access → Anyone with the link → Viewer.**
+
+> Leave it on **Viewer**, not Editor. Viewer is all the board needs. If you
+> want other volunteers to enter numbers, add them by email under
+> "People with access" instead — that keeps the sheet un-vandalisable by
+> anyone who happens to get the link.
+
+Do *not* use File → Publish to the web. It isn't needed, and it lags by up to
+five minutes.
+
+**3. Point the board at it.** Copy the sheet ID out of the browser address bar:
+
+```
+docs.google.com/spreadsheets/d/1AbC...xyz/edit
+                              ^^^^^^^^^^^^ this part
+```
+
+Then in [`config.js`](config.js), uncomment the sheet line and paste it in:
+
+```js
+sources: [
+  'https://docs.google.com/spreadsheets/d/1AbC...xyz/gviz/tq?tqx=out:csv&sheet=Winners',
+  'data/winners.csv',
+],
+```
+
+Commit. **That's the last time you touch this repo.** From here on you only
+ever open the sheet.
 
 ---
 
 ## Running the draw
 
-You have two options for where the numbers live. Pick one in `config.js`.
+Open the sheet. Type the prize number and the winning ticket number. Move to
+the next row. That's the whole job — guests see each new row within about 20
+seconds, and it flashes briefly on their screen as it lands.
 
-### Option A — Google Sheet (recommended)
+Rows can go in in any order; the board always sorts by prize number.
 
-Numbers appear on guests' phones within seconds of you typing them, and any
-number of people can edit the sheet at once.
+**Made a typo?** Just enter that prize number again on a new row with the
+correct ticket. The board keeps the *lower* of any two rows sharing a prize
+number, so the correction wins and the mistake disappears. You never have to
+hunt for the bad cell mid-event. (Controlled by `newestWinsPerPrize` in
+`config.js` — turn it off only if one prize number can legitimately have two
+winning tickets.)
 
-1. Make a sheet with two columns, headers in row 1:
+You can also just fix the cell directly. Either works.
 
-   | prize | ticket |
-   |-------|--------|
-   | 1     | 10428  |
-   | 2     | 10093  |
+---
 
-2. **Share → General access → Anyone with the link → Viewer.**
-   (Do *not* use File → Publish to the web. The `gviz` URL below reads the
-   shared sheet directly and is never cached; the publish-to-web CSV lags by
-   up to five minutes.)
+## When something goes wrong
 
-3. Copy the sheet ID out of its URL:
-   `docs.google.com/spreadsheets/d/`**`1AbC...xyz`**`/edit`
+The board is built so that no single failure blanks it. In order:
 
-4. Put this in `config.js`, with your ID and your tab name:
+1. **The sheet is unreachable** — venue wifi blocking Google, sharing setting
+   changed, Google having a bad day. The board silently falls back to
+   [`data/winners.csv`](data/winners.csv) in this repo.
+2. **A refresh fails** — the last good board stays on screen. It does not go
+   blank and does not show an error over top of real data.
+3. **The guest's connection is bad** — every phone saves the last board it
+   successfully loaded, so the page renders instantly from that and catches up
+   when the signal returns.
 
-   ```js
-   sourceUrl: 'https://docs.google.com/spreadsheets/d/1AbC...xyz/gviz/tq?tqx=out:csv&sheet=Winners',
-   ```
+### Read the status line
 
-5. Commit and push. From then on you only touch the sheet — never the repo.
+The bottom of the page always tells you the truth about what's on screen:
 
-Why this endpoint: it responds with `Access-Control-Allow-Origin` matching the
-requesting site, so a browser on a static page is allowed to read it, and with
-`Cache-Control: no-cache, no-store, must-revalidate`, so every refresh gets the
-current contents.
+| It says | It means |
+|---|---|
+| `Updated 12s ago` | Live from your sheet. This is the normal state. |
+| `Updated 12s ago · backup list` | **The sheet isn't reachable** — showing `data/winners.csv`. Check sharing is still "Anyone with the link → Viewer". |
+| `Saved board from 8:42 PM · reconnecting` | That phone can't reach anything; showing its own last copy. Usually the guest's signal, not you. |
+| `Connecting…` | First load, hasn't reached a source yet. |
 
-### Option B — the CSV in this repo
-
-Edit [`data/winners.csv`](data/winners.csv) on github.com and commit. Takes
-about a minute to go live while Pages rebuilds. Fine as a backup if the venue's
-wifi is blocking Google, or if you'd rather not depend on it.
+**Check this line on your own phone before doors open.** If it says
+`backup list`, the sheet isn't wired up correctly and every guest is looking
+at the fallback file.
 
 ---
 
 ## Before the event
 
-- [ ] Empty `data/winners.csv` down to just the header row, or point
-      `sourceUrl` at your sheet. **The committed sample rows are fake.**
+- [ ] Sheet created, shared **Anyone with the link → Viewer**, ID pasted into `config.js`.
+- [ ] Empty `data/winners.csv` down to just its header row, or fill it with a
+      real snapshot. **The 8 rows committed there now are fake.**
 - [ ] Set `kicker`, `title` and `subtitle` in `config.js` to your event.
-- [ ] Open the site on a phone and confirm the board loads.
-- [ ] Print `qr.html` (it's laid out for one sheet of paper).
-- [ ] Scan the printed QR from across a table to check it reads at that size.
-
-## During the event
-
-Type each prize number and its winning ticket into the sheet as you draw it.
-Guests' phones pick it up on their next refresh — new rows flash briefly so
-people watching the board notice them arrive. Rows can be added in any order;
-the board always sorts by prize number.
-
-If the sheet goes unreachable mid-event, phones keep displaying the last board
-they successfully loaded rather than going blank, and quietly retry.
+- [ ] Load the live site on a phone. Confirm the status line says `Updated …`
+      with **no** "backup list".
+- [ ] Add a test row to the sheet, watch it appear on the phone, delete it again.
+- [ ] Print `qr.html` and scan the printout from across a table.
 
 ---
 
@@ -91,11 +137,11 @@ they successfully loaded rather than going blank, and quietly retry.
 
 | File | What it's for |
 |------|---------------|
-| `config.js` | **The only file you need to edit.** Wording, data source, refresh rate. |
-| `data/winners.csv` | Fallback data source. |
+| `config.js` | **The only file you need to edit.** Wording, data sources, refresh rate. |
+| `data/winners.csv` | Fallback, used automatically if the sheet can't be reached. |
 | `index.html` | Page structure. |
-| `assets/styles.css` | The letterpress theme — two colours, set at the top as CSS variables. |
-| `assets/app.js` | Fetch, CSV parse, render, ticket lookup. |
+| `assets/styles.css` | The letterpress theme — two colours, set as CSS variables at the top. |
+| `assets/app.js` | Fetch with fallback, CSV parse, render, ticket lookup, offline cache. |
 | `qr.html` | Printable QR poster pointing at the board. |
 
 ## Local preview
@@ -106,3 +152,14 @@ python3 -m http.server 8000
 ```
 
 A plain `file://` open won't work — the CSV fetch needs an HTTP origin.
+
+## Why this endpoint
+
+The board reads the sheet through Google's `gviz` CSV endpoint rather than the
+better-known "Publish to the web" CSV. Two measured reasons:
+
+- It answers with `Access-Control-Allow-Origin` set to the requesting site, so
+  a browser on a static page is allowed to read it.
+- It answers with `Cache-Control: no-cache, no-store, must-revalidate`, so
+  every refresh gets the sheet's current contents. The publish-to-web CSV is
+  cached and can lag several minutes behind what you typed.

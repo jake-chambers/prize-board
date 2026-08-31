@@ -10,20 +10,25 @@ window.PRIZE_BOARD_CONFIG = {
   subtitle: 'Check your ticket number below',
 
   // ── Where the numbers come from ─────────────────────────────
-  // Any URL that returns CSV with two columns: prize, ticket.
+  // Tried in order. The first one that answers wins, so the CSV in
+  // this repo is a safety net if the sheet is ever unreachable.
   //
-  // A) Google Sheet (recommended — updates are live, no cache lag):
-  //    1. Share the sheet: "Anyone with the link" → Viewer
-  //    2. Use the URL below, swapping in your sheet ID and tab name
-  //
-  //    'https://docs.google.com/spreadsheets/d/SHEET_ID/gviz/tq?tqx=out:csv&sheet=Winners'
-  //
-  // B) The CSV committed in this repo (works offline of Google,
-  //    but takes ~1 min to go live after each commit):
-  sourceUrl: 'data/winners.csv',
+  // To use your sheet, replace SHEET_ID below and set the tab name.
+  // Setup steps are in the README.
+  sources: [
+    // 'https://docs.google.com/spreadsheets/d/SHEET_ID/gviz/tq?tqx=out:csv&sheet=Winners',
+    'data/winners.csv',
+  ],
 
   // ── How often each guest's phone re-checks, in seconds ──────
   refreshSeconds: 20,
+
+  // ── Typo insurance ──────────────────────────────────────────
+  // With this on, entering the same prize number twice keeps only the
+  // lower row — so fixing a mistake means re-entering that prize, and
+  // the board sorts itself out. Turn off only if one prize number can
+  // legitimately have two winning tickets.
+  newestWinsPerPrize: true,
 
   // ── Column headers to look for (case/spacing insensitive) ───
   // If none match, the first two columns are used as prize, ticket.

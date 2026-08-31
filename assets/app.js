@@ -1,8 +1,14 @@
 /* ============================================================
    Prize Board
-   Static page. Pulls a two-column CSV (prize, ticket) from
-   whatever URL config.js points at, and re-pulls on a timer.
-   No build step, no server, no dependencies.
+   Static page. Pulls two-column CSV (prize, ticket) from the
+   first source in config.js that answers, and re-pulls on a
+   timer. No server, no build step, no dependencies.
+
+   Reliability, in layers:
+     1. try each source in order, so one outage isn't fatal
+     2. keep the last good board on screen if a refresh fails
+     3. cache it in localStorage, so a phone on bad wifi still
+        renders instantly instead of showing a blank page
    ============================================================ */
 (() => {
   'use strict';
@@ -11,40 +17,46 @@
     kicker:        '★  Prize Draw  ★',
     title:         'Prize\nWinners',
     subtitle:      'Check your ticket number below',
-    sourceUrl:     'data/winners.csv',
+    sources:       ['data/winners.csv'],
     refreshSeconds: 20,
+    newestWinsPerPrize: true,
     prizeHeaders:  ['prize', 'prize #', 'prize no', 'prize number', 'board', '#'],
     ticketHeaders: ['ticket', 'ticket #', 'ticket no', 'ticket number', 'winner', 'number'],
   }, window.PRIZE_BOARD_CONFIG || {});
+
+  // Accept the older single-URL form too.
+  const SOURCES = (CFG.sources && CFG.sources.length ? CFG.sources
+                 : [CFG.sourceUrl || 'data/winners.csv']).filter(Boolean);
+
+  const CACHE_KEY = 'prize-board:v1';
+  const CACHE_MAX_AGE = 12 * 60 * 60 * 1000;   // a stale board is worse than none
 
   const $ = (id) => document.getElementById(id);
   const el = { ticket:$('ticket'), clear:$('clear'), verdict:$('verdict'), rows:$('rows'),
                state:$('state'), count:$('count'), stamp:$('stamp'), refresh:$('refresh') };
 
-  /** Last successfully-parsed rows: [{prize, ticket}] */
-  let winners = [];
-  /** Keys ("prize|ticket") seen in the previous load, to flag arrivals. */
-  let seen = new Set();
-  let firstLoad = true;
+  let winners = [];              // [{prize, ticket}]
+  let seen = new Set();          // keys from the previous render, to flag arrivals
+  let hasRendered = false;
   let lastOkAt = null;
+  let activeSource = -1;         // index into SOURCES; -1 = nothing reached yet
+  let fromCache = false;
   let inFlight = false;
 
-  /* ── Masthead text from config ───────────────────────────── */
+  /* ── Masthead ────────────────────────────────────────────── */
+  const esc = (s) => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   $('kicker').textContent = CFG.kicker;
-  $('title').innerHTML = String(CFG.title).split('\n')
-    .map(s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])))
-    .join('<br>');
+  $('title').innerHTML = String(CFG.title).split('\n').map(esc).join('<br>');
   $('subtitle').textContent = CFG.subtitle;
   document.title = String(CFG.title).replace(/\n/g, ' ');
 
   /* ── CSV ─────────────────────────────────────────────────── */
 
-  /** RFC 4180 parser: handles quoted fields, escaped quotes, CRLF. */
+  /** RFC 4180: quoted fields, escaped quotes, CRLF. */
   function parseCSV(text) {
     const out = [];
     let row = [], field = '', quoted = false;
-    // Strip a UTF-8 BOM if the sheet exported one.
-    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);   // strip BOM
 
     for (let i = 0; i < text.length; i++) {
       const c = text[i];
@@ -66,73 +78,113 @@
     return out.map(r => r.map(s => s.trim()));
   }
 
-  const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9#]/g, '');
-
+  const norm  = (s) => String(s).toLowerCase().replace(/[^a-z0-9#]/g, '');
   /** Google's CSV export renders whole numbers as "42.0" — undo that. */
   const clean = (v) => String(v ?? '').trim().replace(/^(-?\d+)\.0+$/, '$1');
+  /** Key a prize by its value, so "07" and "7" are the same prize. */
+  const prizeKey = (p) => Number.isFinite(Number(p)) && p !== '' ? String(Number(p)) : String(p).toUpperCase();
 
-  /** Work out which column is the prize and which is the ticket. */
   function pickColumns(table) {
     const head = table[0] || [];
     const wanted = (list) => head.findIndex(h => list.some(w => norm(h) === norm(w)));
-    let p = wanted(CFG.prizeHeaders);
-    let t = wanted(CFG.ticketHeaders);
-
+    const p = wanted(CFG.prizeHeaders);
+    const t = wanted(CFG.ticketHeaders);
     if (p !== -1 && t !== -1) return { prize:p, ticket:t, body:table.slice(1) };
 
-    // No usable header row — treat every row as data, first two columns.
+    // No usable header row — first two columns, and only skip row 1 if it
+    // looks like a label rather than data.
     const looksLikeHeader = head.some(h => /[a-z]/i.test(h));
     return { prize:0, ticket:1, body: looksLikeHeader ? table.slice(1) : table };
   }
 
   function toWinners(text) {
+    // A sharing change turns the sheet response into an HTML login page that
+    // still arrives as 200. Treat that as a failed source, not an empty board.
+    if (/^\s*<(!doctype|html)/i.test(text)) throw new Error('got HTML, not CSV');
+
     const table = parseCSV(text).filter(r => r.some(c => c !== ''));
     if (!table.length) return [];
     const { prize, ticket, body } = pickColumns(table);
 
-    return body
+    let rows = body
       .map(r => ({ prize:clean(r[prize]), ticket:clean(r[ticket]) }))
-      .filter(w => w.prize !== '' && w.ticket !== '')
-      .sort((a, b) => {
-        const na = Number(a.prize), nb = Number(b.prize);
-        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
-        return String(a.prize).localeCompare(String(b.prize), undefined, { numeric:true });
-      });
+      .filter(w => w.prize !== '' && w.ticket !== '');
+
+    // Same prize entered twice? The later row is the correction — it wins.
+    if (CFG.newestWinsPerPrize) {
+      const byPrize = new Map();
+      for (const w of rows) byPrize.set(prizeKey(w.prize), w);
+      rows = [...byPrize.values()];
+    }
+
+    return rows.sort((a, b) => {
+      const na = Number(a.prize), nb = Number(b.prize);
+      if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
+      return String(a.prize).localeCompare(String(b.prize), undefined, { numeric:true });
+    });
+  }
+
+  /* ── Cache ───────────────────────────────────────────────── */
+
+  function saveCache() {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ rows:winners, at:lastOkAt }));
+    } catch { /* private mode, quota — the board works without it */ }
+  }
+
+  function loadCache() {
+    try {
+      const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (!c || !Array.isArray(c.rows) || !c.at) return null;
+      if (Date.now() - c.at > CACHE_MAX_AGE) return null;
+      return c;
+    } catch { return null; }
   }
 
   /* ── Fetch ───────────────────────────────────────────────── */
+
+  async function pull(src) {
+    const url = new URL(src, location.href);
+    url.searchParams.set('_', Date.now());          // defeat any intermediate cache
+    const res = await fetch(url, { cache:'no-store', redirect:'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return toWinners(await res.text());
+  }
 
   async function load({ manual = false } = {}) {
     if (inFlight) return;
     inFlight = true;
     if (manual) { el.refresh.disabled = true; el.refresh.textContent = 'Refreshing…'; }
 
-    try {
-      const url = new URL(CFG.sourceUrl, location.href);
-      url.searchParams.set('_', Date.now());          // defeat any intermediate cache
-      const res = await fetch(url, { cache:'no-store', redirect:'follow' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-
-      const next = toWinners(await res.text());
-      winners = next;
-      lastOkAt = Date.now();
-      render();
-      el.state.textContent = winners.length ? '' : 'No winners posted yet. Sit tight.';
-      el.state.classList.remove('state--error');
-      firstLoad = false;
-    } catch (err) {
-      console.warn('[prize-board] load failed:', err);
-      if (firstLoad) {
-        el.state.textContent = 'Can’t reach the board. Retrying…';
-        el.state.classList.add('state--error');
+    let done = false;
+    for (let i = 0; i < SOURCES.length; i++) {
+      try {
+        winners = await pull(SOURCES[i]);
+        activeSource = i;
+        fromCache = false;
+        lastOkAt = Date.now();
+        saveCache();
+        render();
+        el.state.textContent = winners.length ? '' : 'No winners posted yet. Sit tight.';
+        el.state.classList.remove('state--error');
+        done = true;
+        break;
+      } catch (err) {
+        console.warn(`[prize-board] source ${i} (${SOURCES[i]}) failed:`, err.message);
       }
-      // Otherwise: keep the last good board on screen and try again next tick.
-    } finally {
-      inFlight = false;
-      el.refresh.disabled = false;
-      el.refresh.textContent = 'Refresh now';
-      stamp();
     }
+
+    // Every source is unreachable. Whatever is already on screen — live or
+    // cached — stays there, and we try again on the next tick.
+    if (!done && !hasRendered) {
+      el.state.textContent = 'Can’t reach the board. Retrying…';
+      el.state.classList.add('state--error');
+    }
+
+    inFlight = false;
+    el.refresh.disabled = false;
+    el.refresh.textContent = 'Refresh now';
+    stamp();
   }
 
   /* ── Render ──────────────────────────────────────────────── */
@@ -147,7 +199,7 @@
 
       const li = document.createElement('li');
       li.className = 'row';
-      if (!firstLoad && !seen.has(key)) li.classList.add('row--new');
+      if (hasRendered && !seen.has(key)) li.classList.add('row--new');
       li.dataset.ticket = w.ticket;
 
       const prize = document.createElement('span');
@@ -169,8 +221,8 @@
 
     el.rows.replaceChildren(frag);
     seen = nextSeen;
-    el.count.textContent = winners.length
-      ? `${winners.length} drawn` : '';
+    hasRendered = true;
+    el.count.textContent = winners.length ? `${winners.length} drawn` : '';
     check();                                    // re-apply any active search
   }
 
@@ -191,18 +243,15 @@
     el.rows.classList.toggle('rows--filtering', q !== '');
 
     for (const li of el.rows.children) li.classList.remove('row--hit');
-
     if (q === '') { el.verdict.replaceChildren(); return; }
 
     const hits = winners.filter(w => same(w.ticket, q));
-
     for (const li of el.rows.children) {
       if (same(li.dataset.ticket, q)) li.classList.add('row--hit');
     }
 
     const card = document.createElement('div');
     card.className = 'verdict__card ' + (hits.length ? 'verdict__card--win' : 'verdict__card--miss');
-
     const line = (cls, txt) => {
       const s = document.createElement('span'); s.className = cls; s.textContent = txt; return s;
     };
@@ -223,20 +272,30 @@
         line('verdict__small', 'More prizes still to be drawn — check back')
       );
     }
-
     el.verdict.replaceChildren(card);
   }
 
-  /* ── "Updated N ago" ─────────────────────────────────────── */
+  /* ── Status line ─────────────────────────────────────────── */
+
+  const clock = (t) => new Date(t).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
 
   function stamp() {
     if (!lastOkAt) { el.stamp.textContent = 'Connecting…'; return; }
+
+    if (fromCache) {
+      el.stamp.textContent = `Saved board from ${clock(lastOkAt)} · reconnecting`;
+      return;
+    }
+
     const s = Math.max(0, Math.round((Date.now() - lastOkAt) / 1000));
-    el.stamp.textContent =
-      s < 5   ? 'Updated just now' :
-      s < 60  ? `Updated ${s}s ago` :
-      s < 3600? `Updated ${Math.round(s / 60)}m ago` :
-                `Updated ${new Date(lastOkAt).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}`;
+    const ago = s < 5    ? 'Updated just now'
+              : s < 60   ? `Updated ${s}s ago`
+              : s < 3600 ? `Updated ${Math.round(s / 60)}m ago`
+              :            `Updated ${clock(lastOkAt)}`;
+
+    // Say so plainly when we've dropped off the primary source, so anyone
+    // running the event can spot it without opening a console.
+    el.stamp.textContent = activeSource > 0 ? `${ago} · backup list` : ago;
   }
 
   /* ── Wiring ──────────────────────────────────────────────── */
@@ -245,10 +304,8 @@
   el.ticket.addEventListener('search', check);
   el.clear.addEventListener('click', () => { el.ticket.value = ''; check(); el.ticket.focus(); });
   el.refresh.addEventListener('click', () => load({ manual:true }));
-  el.ticket.form?.addEventListener('submit', (e) => e.preventDefault());
 
-  // Pull again whenever the phone comes back to the page — guests pocket
-  // and re-open this constantly, and that should always show fresh data.
+  // Guests pocket and re-open this constantly; each return should be fresh.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') load();
   });
@@ -257,6 +314,18 @@
   setInterval(() => { if (document.visibilityState === 'visible') load(); },
               Math.max(5, CFG.refreshSeconds) * 1000);
   setInterval(stamp, 1000);
+
+  // Paint the cached board first so there's never a blank screen, then
+  // go and get the real one.
+  const cached = loadCache();
+  if (cached) {
+    winners = cached.rows;
+    lastOkAt = cached.at;
+    fromCache = true;
+    render();
+    el.state.textContent = '';
+    stamp();
+  }
 
   load();
 })();
