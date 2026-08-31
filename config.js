@@ -16,7 +16,10 @@ window.PRIZE_BOARD_CONFIG = {
   // To use your sheet, replace SHEET_ID below and set the tab name.
   // Setup steps are in the README.
   sources: [
-    // 'https://docs.google.com/spreadsheets/d/SHEET_ID/gviz/tq?tqx=out:csv&sheet=Winners',
+    // Your sheet. gid=0 is the first tab — it keeps working even if you
+    // rename that tab, which a tab name in the URL would not.
+    'https://docs.google.com/spreadsheets/d/1lKp75tCmH31xOaIF__ZC1pKL8kdHi7cPs3QXWGBA5HA/gviz/tq?tqx=out:csv&gid=0',
+    // Safety net, used automatically only if the sheet can't be reached.
     'data/winners.csv',
   ],
 
