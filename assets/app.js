@@ -18,7 +18,7 @@
     title:         'Prize\nWinners',
     subtitle:      'Check your ticket number below',
     sources:       ['data/winners.csv'],
-    refreshSeconds: 20,
+    refreshSeconds: 30,
     newestWinsPerPrize: true,
     prizeHeaders:  ['prize', 'prize #', 'prize no', 'prize number', 'board', '#'],
     ticketHeaders: ['ticket', 'ticket #', 'ticket no', 'ticket number', 'winner', 'number'],
@@ -42,6 +42,8 @@
   let activeSource = -1;         // index into SOURCES; -1 = nothing reached yet
   let fromCache = false;
   let inFlight = false;
+  let failures = 0;      // consecutive fully-failed loads, drives backoff
+  let timer = null;
 
   /* ── Masthead ────────────────────────────────────────────── */
   const esc = (s) => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
@@ -159,7 +161,14 @@
     let done = false;
     for (let i = 0; i < SOURCES.length; i++) {
       try {
-        winners = await pull(SOURCES[i]);
+        const rows = await pull(SOURCES[i]);
+        // A backup that comes back empty must never replace a board we already
+        // have. If the sheet gets rate-limited, this is the difference between
+        // guests seeing a stale board and guests seeing "no winners yet".
+        if (i > 0 && rows.length === 0 && winners.length > 0) {
+          throw new Error('backup is empty; keeping the board already loaded');
+        }
+        winners = rows;
         activeSource = i;
         fromCache = false;
         lastOkAt = Date.now();
@@ -174,17 +183,37 @@
       }
     }
 
-    // Every source is unreachable. Whatever is already on screen — live or
-    // cached — stays there, and we try again on the next tick.
-    if (!done && !hasRendered) {
-      el.state.textContent = 'Can’t reach the board. Retrying…';
-      el.state.classList.add('state--error');
+    if (done) {
+      failures = 0;
+    } else {
+      failures++;
+      // Nothing answered. Whatever is on screen stays, relabelled honestly as
+      // a saved copy; only a phone that has never loaded sees an error.
+      if (hasRendered && winners.length) fromCache = true;
+      else if (!hasRendered) {
+        el.state.textContent = 'Can’t reach the board. Retrying…';
+        el.state.classList.add('state--error');
+      }
     }
 
     inFlight = false;
     el.refresh.disabled = false;
     el.refresh.textContent = 'Refresh now';
     stamp();
+    schedule();
+  }
+
+  /** Queue the next poll: jittered so a crowd doesn't synchronise, and backed
+      off so a struggling source doesn't get hammered by every phone at once. */
+  function schedule() {
+    clearTimeout(timer);
+    const base    = Math.max(5, CFG.refreshSeconds) * 1000;
+    const backoff = Math.min(2 ** failures, 8);       // up to 8x on repeated failure
+    const jitter  = 0.85 + Math.random() * 0.3;       // ±15%
+    timer = setTimeout(() => {
+      if (document.visibilityState === 'visible') load();
+      else schedule();                                // stay idle, keep the chain alive
+    }, base * backoff * jitter);
   }
 
   /* ── Render ──────────────────────────────────────────────── */
@@ -311,8 +340,6 @@
   });
   window.addEventListener('online', () => load());
 
-  setInterval(() => { if (document.visibilityState === 'visible') load(); },
-              Math.max(5, CFG.refreshSeconds) * 1000);
   setInterval(stamp, 1000);
 
   // Paint the cached board first so there's never a blank screen, then

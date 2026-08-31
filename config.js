@@ -24,7 +24,7 @@ window.PRIZE_BOARD_CONFIG = {
   ],
 
   // ── How often each guest's phone re-checks, in seconds ──────
-  refreshSeconds: 20,
+  refreshSeconds: 30,
 
   // ── Typo insurance ──────────────────────────────────────────
   // With this on, entering the same prize number twice keeps only the

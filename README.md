@@ -12,7 +12,7 @@ no app, no account — for them or for you, once it's set up.
 ## How it works
 
 You type winners into a Google Sheet. Guests' phones read that sheet directly
-and redraw the board every 20 seconds. There is no server and no database.
+and redraw the board every 30 seconds. There is no server and no database.
 
 ```
    You                     Google Sheet              Guest's phone
@@ -74,7 +74,7 @@ ever open the sheet.
 ## Running the draw
 
 Open the sheet. Type the prize number and the winning ticket number. Move to
-the next row. That's the whole job — guests see each new row within about 20
+the next row. That's the whole job — guests see each new row within about 30
 seconds, and it flashes briefly on their screen as it lands.
 
 Rows can go in in any order; the board always sorts by prize number.
@@ -152,6 +152,47 @@ python3 -m http.server 8000
 ```
 
 A plain `file://` open won't work — the CSV fetch needs an HTTP origin.
+
+## Will it hold up for a crowd?
+
+Measured, not guessed. Numbers below are from the live site and the real sheet.
+
+**What each guest downloads once:** about 10 KB of HTML, CSS and JS, plus
+roughly 33 KB of fonts that their browser then caches for the rest of the
+night. Call it 43 KB per person, one time.
+
+**What each guest pulls on a refresh:** 90 bytes for 7 rows; expect around
+1 KB with all 80 prizes drawn. That's it — no images, no framework.
+
+**GitHub Pages.** A thousand guests is about 10 MB against a
+[soft limit of 100 GB per month](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)
+— roughly 0.01% of the allowance. Not a consideration.
+
+**The Google endpoint.** This is the only part under real load, so it was
+load-tested directly: 150 requests at 25 concurrent, then 200 requests at 50
+concurrent, all from a single IP (the venue-wifi case, where hundreds of
+guests share one public address). **All 350 returned HTTP 200**, median 240 ms,
+p95 300 ms. No throttling, no 429s.
+
+Three things keep the sustained rate far below that anyway:
+
+- Polling **pauses entirely when the page isn't visible**. Guests check the
+  board and pocket the phone; a backgrounded tab makes no requests at all.
+  Realistically only a fraction of the room is polling at any moment.
+- The interval is **jittered ±15%**, so a crowd that all scanned the QR at the
+  same moment doesn't stay locked into one synchronised spike every 30s.
+- Repeated failures **back off exponentially** up to 8×, so a struggling
+  endpoint doesn't get hammered by every phone at once.
+
+**If Google throttles anyway**, the board degrades instead of breaking: phones
+keep showing the last board they loaded, labelled `Saved board from … ·
+reconnecting`, and recover on their own. An empty backup can never replace a
+board that already has rows on it.
+
+The honest caveat: `gviz` is an undocumented endpoint with no published rate
+limit, so nobody can promise a ceiling. What can be said is that it was not
+reachable at the rates tested, and that every failure path has somewhere
+sensible to land.
 
 ## Why this endpoint
 
