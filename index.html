@@ -29,13 +29,20 @@
 
   <!-- ── Ticket checker ─────────────────────────────────────── -->
   <section class="panel checker" aria-labelledby="checker-label">
-    <label class="checker__label" id="checker-label" for="ticket">Enter your ticket number</label>
-    <div class="checker__field">
+    <p class="checker__label" id="checker-label">Enter your ticket number</p>
+    <div class="checker__fields">
       <input id="ticket" type="text" inputmode="numeric" autocomplete="off"
-             enterkeyhint="search" placeholder="0000" aria-describedby="verdict"
-             maxlength="12" spellcheck="false">
-      <button id="clear" class="checker__clear" type="button" aria-label="Clear" hidden>✕</button>
+             enterkeyhint="search" placeholder="0000" maxlength="12" spellcheck="false"
+             aria-label="Your ticket number, or the first ticket of your strip">
+      <span class="checker__join" aria-hidden="true">to</span>
+      <input id="ticketTo" type="text" inputmode="numeric" autocomplete="off"
+             enterkeyhint="search" placeholder="0000" maxlength="12" spellcheck="false"
+             aria-label="Last ticket of your strip, optional">
     </div>
+    <p class="checker__hint">
+      <span>Got a strip? First and last. One ticket? Just the left box.</span>
+      <button id="clear" class="checker__clear" type="button" hidden>Clear</button>
+    </p>
     <div id="verdict" class="verdict" role="status" aria-live="polite"></div>
   </section>
 

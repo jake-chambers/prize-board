@@ -90,6 +90,34 @@ You can also just fix the cell directly. Either works.
 
 ---
 
+## What guests do
+
+They scan the QR, and get two boxes.
+
+- **One ticket?** Fill the left box only.
+- **A strip?** First ticket on the left, last on the right. Everything in
+  between is checked at once, both ends included.
+
+Typing or pasting `1020-1100` into the left box splits it across the two by
+itself — `to`, an en dash, and `..` all work the same way, and entering the
+range backwards is fine.
+
+A strip that wins more than once shows every hit, so people know which ticket
+to hand over for which prize:
+
+```
+        ★  WINNER  ★
+          5 PRIZES
+  Ticket 1042 .......... Prize 1
+  Ticket 1067 .......... Prize 3
+  Ticket 1091 .......... Prize 5
+```
+
+No match shows how many tickets were checked (`Checked 81 tickets · Not yet`),
+so nobody has to wonder whether the range registered.
+
+---
+
 ## When something goes wrong
 
 The board is built so that no single failure blanks it. In order:
