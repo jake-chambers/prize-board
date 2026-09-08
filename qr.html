@@ -52,7 +52,8 @@
   @media print{
     @page{ margin:12mm; }
     .noprint,.grain{ display:none !important; }
-    .sheet::before{ display:none !important; }
+    .sheet{ border:0 !important; box-shadow:none !important;
+            min-height:0 !important; margin:0 !important; }
     body{ background:#fff; }
     .qrbox{ width:82mm; }
   }

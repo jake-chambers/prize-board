@@ -43,18 +43,21 @@ body{
 }
 
 /* ── Page frame: the poster's double keyline ────────────────── */
+/* The frame belongs to the page, not the viewport. Pinning it with
+   position:fixed meant content scrolled underneath and got sliced by the
+   keyline; as a real border it travels with the content, the way the edge
+   of a printed poster does. */
 .sheet{
   max-width:640px;
-  margin:0 auto;
+  margin:7px auto;
+  min-height:calc(100vh - 14px);
+  min-height:calc(100dvh - 14px);      /* dvh: ignores mobile browser chrome */
   padding:calc(var(--gap) + env(safe-area-inset-top)) var(--gap)
           calc(var(--gap) + env(safe-area-inset-bottom));
   position:relative;
-}
-.sheet::before{
-  content:""; position:fixed; inset:7px; pointer-events:none; z-index:8;
   border:2px solid var(--ink);
-  box-shadow:inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--ink);
   border-radius:4px;
+  box-shadow:inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--ink);
 }
 
 /* ── Rules & flourishes ─────────────────────────────────────── */
