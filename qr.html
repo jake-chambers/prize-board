@@ -91,29 +91,23 @@
   </div>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="assets/qr.js"></script>
 <script>
 (() => {
   // Encode the board URL as it actually is — so this poster stays correct
-  // even if the site moves to a custom domain.
+  // even if the site moves to a custom domain. The encoder is assets/qr.js,
+  // ours, offline, no third party in the loop and nothing between the scan
+  // and the board.
   const target = new URL('./', location.href).href;
   document.getElementById('url').textContent = target.replace(/^https?:\/\//, '');
 
   const box = document.getElementById('qrbox');
-  if (typeof QRious === 'undefined') {
-    box.textContent = 'Open this page with internet access to draw the code.';
-    return;
-  }
-
   const canvas = document.createElement('canvas');
-  new QRious({
-    element: canvas,
-    value: target,
-    size: 1200,            // big enough that print stays crisp
-    level: 'M',            // error correction: reads reliably, stays coarse
-    padding: 0,
-    background: '#F6F0E1',
-    foreground: '#C0272D',
+  QR.toCanvas(QR.encode(target, 'M'), canvas, {
+    scale: 40,             // big enough that print stays crisp
+    margin: 0,             // the box's own padding is the quiet zone
+    light: '#F6F0E1',
+    dark: '#C0272D',
   });
 
   box.classList.remove('qrbox--pending');

@@ -7,6 +7,9 @@ no app, no account — for them or for you, once it's set up.
 **Live:** https://jake-chambers.github.io/prize-board/
 **QR poster:** https://jake-chambers.github.io/prize-board/qr.html
 
+The QR code encodes the board's address directly. Scanning it opens the board
+and nothing else — there is no QR-service redirect in between.
+
 ---
 
 ## How it works
@@ -90,34 +93,6 @@ You can also just fix the cell directly. Either works.
 
 ---
 
-## What guests do
-
-They scan the QR, and get two boxes.
-
-- **One ticket?** Fill the left box only.
-- **A strip?** First ticket on the left, last on the right. Everything in
-  between is checked at once, both ends included.
-
-Typing or pasting `1020-1100` into the left box splits it across the two by
-itself — `to`, an en dash, and `..` all work the same way, and entering the
-range backwards is fine.
-
-A strip that wins more than once shows every hit, so people know which ticket
-to hand over for which prize:
-
-```
-        ★  WINNER  ★
-          5 PRIZES
-  Ticket 1042 .......... Prize 1
-  Ticket 1067 .......... Prize 3
-  Ticket 1091 .......... Prize 5
-```
-
-No match shows how many tickets were checked (`Checked 81 tickets · Not yet`),
-so nobody has to wonder whether the range registered.
-
----
-
 ## When something goes wrong
 
 The board is built so that no single failure blanks it. In order:
@@ -171,6 +146,9 @@ at the fallback file.
 | `assets/styles.css` | The letterpress theme — two colours, set as CSS variables at the top. |
 | `assets/app.js` | Fetch with fallback, CSV parse, render, ticket lookup, offline cache. |
 | `qr.html` | Printable QR poster pointing at the board. |
+| `assets/qr.js` | Our own QR encoder. The code is built here, offline — no QR service, no redirect through anyone else's site. |
+| `assets/qr.svg`, `assets/qr.png` | Ready-made copies of the code, black on white, for flyers or anywhere else. |
+| `tools/make-qr.js` | Regenerates those two files: `node tools/make-qr.js`. |
 
 ## Local preview
 

@@ -32,7 +32,7 @@
   const CACHE_MAX_AGE = 12 * 60 * 60 * 1000;   // a stale board is worse than none
 
   const $ = (id) => document.getElementById(id);
-  const el = { ticket:$('ticket'), ticketTo:$('ticketTo'), clear:$('clear'), verdict:$('verdict'), rows:$('rows'),
+  const el = { ticket:$('ticket'), clear:$('clear'), verdict:$('verdict'), rows:$('rows'),
                state:$('state'), count:$('count'), stamp:$('stamp'), refresh:$('refresh') };
 
   let winners = [];              // [{prize, ticket}]
@@ -266,62 +266,17 @@
     return A !== '' && B !== '' && Number.isFinite(na) && Number.isFinite(nb) && na === nb;
   }
 
-  const num = (v) => {
-    const n = Number(String(v).trim());
-    return Number.isFinite(n) ? n : null;
-  };
-
-  /** People write their strip as "1020-1100" and paste or type the whole
-      thing into the first box. Split it for them instead of making them
-      retype — the second box is a convenience, not a requirement. */
-  function absorbRange() {
-    const m = el.ticket.value.match(
-      /^\s*([A-Za-z0-9]+)\s*(?:-{1,2}|–|—|\.\.+|\/|to|through|thru)\s*([A-Za-z0-9]+)\s*$/i);
-    if (!m) return;
-    el.ticket.value   = m[1];
-    el.ticketTo.value = m[2];
-    // Hand the caret to the second box so the rest of what they're typing
-    // lands there. Without this, typing "1020-1100" straight through splits
-    // at "1020-1" and then keeps appending into the first box.
-    el.ticketTo.focus();
-    const end = el.ticketTo.value.length;
-    try { el.ticketTo.setSelectionRange(end, end); } catch { /* older iOS */ }
-  }
-
-  /** Whatever is in the two boxes, as a predicate over ticket numbers. */
-  function buildQuery() {
-    // Mid-typing the first box reads "1020-"; treat that as just "1020"
-    // rather than flashing "not yet" at someone halfway through a range.
-    const a = el.ticket.value.trim().replace(/[-–—/.\s]+$/, '');
-    const b = el.ticketTo.value.trim();
-    if (!a && !b) return null;
-
-    const na = num(a), nb = num(b);
-    if (a && b && na !== null && nb !== null) {
-      const lo = Math.min(na, nb), hi = Math.max(na, nb);   // tolerate reversed entry
-      return {
-        range: true, count: hi - lo + 1,
-        test: (t) => { const n = num(t); return n !== null && n >= lo && n <= hi; },
-      };
-    }
-    // One box filled, or non-numeric tickets: fall back to an exact match.
-    const one = a || b;
-    return { range: false, test: (t) => same(t, one) };
-  }
-
   function check() {
-    const q = buildQuery();
-    el.clear.hidden = !q;
-    el.rows.classList.toggle('rows--filtering', !!q);
+    const q = el.ticket.value.trim();
+    el.clear.hidden = q === '';
+    el.rows.classList.toggle('rows--filtering', q !== '');
 
     for (const li of el.rows.children) li.classList.remove('row--hit');
-    if (!q) { el.verdict.replaceChildren(); return; }
+    if (q === '') { el.verdict.replaceChildren(); return; }
 
-    // Note we test the ~80 winners against the range, never the range against
-    // the winners — a strip of 500 tickets costs exactly as much as one.
-    const hits = winners.filter(w => q.test(w.ticket));
+    const hits = winners.filter(w => same(w.ticket, q));
     for (const li of el.rows.children) {
-      if (q.test(li.dataset.ticket)) li.classList.add('row--hit');
+      if (same(li.dataset.ticket, q)) li.classList.add('row--hit');
     }
 
     const card = document.createElement('div');
@@ -337,11 +292,11 @@
         line('verdict__small', `Ticket ${hits[0].ticket} — come see us to collect`)
       );
     } else if (hits.length > 1) {
+      // One ticket number can be against more than one prize.
       card.append(
         line('verdict__eyebrow', '★  Winner  ★'),
         line('verdict__big', `${hits.length} Prizes`)
       );
-      // Which ticket won which prize — they need both to collect.
       const ul = document.createElement('ul');
       ul.className = 'verdict__list';
       for (const h of hits) {
@@ -358,7 +313,7 @@
       card.append(ul, line('verdict__small', 'Come see us to collect'));
     } else {
       card.append(
-        line('verdict__eyebrow', q.range ? `Checked ${q.count} tickets` : 'Not on the board'),
+        line('verdict__eyebrow', 'Not on the board'),
         line('verdict__big', 'Not yet'),
         line('verdict__small', 'More prizes still to be drawn — check back')
       );
@@ -396,12 +351,9 @@
 
   /* ── Wiring ──────────────────────────────────────────────── */
 
-  el.ticket.addEventListener('input', () => { absorbRange(); check(); });
-  el.ticketTo.addEventListener('input', check);
-  el.clear.addEventListener('click', () => {
-    el.ticket.value = ''; el.ticketTo.value = '';
-    check(); el.ticket.focus();
-  });
+  el.ticket.addEventListener('input', check);
+  el.ticket.addEventListener('search', check);
+  el.clear.addEventListener('click', () => { el.ticket.value = ''; check(); el.ticket.focus(); });
   el.refresh.addEventListener('click', () => load({ manual:true }));
 
   // Guests pocket and re-open this constantly; each return should be fresh.
