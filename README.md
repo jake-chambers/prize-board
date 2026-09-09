@@ -116,6 +116,8 @@ The bottom of the page always tells you the truth about what's on screen:
 | `Updated 12s ago · backup list` | **The sheet isn't reachable** — showing `data/winners.csv`. Check sharing is still "Anyone with the link → Viewer". |
 | `Saved board from 8:42 PM · reconnecting` | That phone can't reach anything; showing its own last copy. Usually the guest's signal, not you. |
 | `Connecting…` | First load, hasn't reached a source yet. |
+| `Still trying to reach the board…` | Nothing answered within 12s of opening. Usually the guest's signal. |
+| `Something went wrong — reload this page.` | The script itself hit an error. Reloading fixes it; tell me if it recurs. |
 
 **Check this line on your own phone before doors open.** If it says
 `backup list`, the sheet isn't wired up correctly and every guest is looking
@@ -149,6 +151,17 @@ at the fallback file.
 | `assets/qr.js` | Our own QR encoder. The code is built here, offline — no QR service, no redirect through anyone else's site. |
 | `assets/qr.svg`, `assets/qr.png` | Ready-made copies of the code, black on white, for flyers or anywhere else. |
 | `tools/make-qr.js` | Regenerates those two files: `node tools/make-qr.js`. |
+
+## If you ever edit the code
+
+`index.html` loads `config.js`, `app.js` and `styles.css` with a `?v=N` stamp.
+**Bump that number in `index.html` (and `qr.html`) whenever you change any of
+them.** Browsers cache each file for 10 minutes independently, so without the
+bump a phone can end up running old JavaScript against new HTML — which is
+exactly what once left the page stuck on "Loading the board…". Changing the
+stamp makes them a matched set.
+
+Editing the *sheet* needs none of this. This only applies to the code.
 
 ## Local preview
 
