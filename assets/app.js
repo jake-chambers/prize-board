@@ -47,7 +47,7 @@
     recheckMinutes: 5,
   }, window.PRIZE_BOARD_CONFIG || {});
 
-  const el = { ticket:$('ticket'), clear:$('clear'), verdict:$('verdict'), rows:$('rows'),
+  const el = { checker:document.querySelector('.checker'), ticket:$('ticket'), clear:$('clear'), verdict:$('verdict'), rows:$('rows'),
                state:$('state'), count:$('count'), stamp:$('stamp') };
 
   /* ── Taking on a set of results ──────────────────────────── */
@@ -95,6 +95,10 @@
     el.rows.replaceChildren(frag);
     hasRendered = true;
     txt(el.count, winners.length ? `${winners.length} drawn` : '');
+
+    // Nothing published means nothing to look up. Hiding the box is kinder
+    // than letting someone type their ticket in and get a non-answer.
+    if (el.checker) el.checker.hidden = winners.length === 0;
 
     if (el.state) {
       el.state.classList.remove('state--error');
@@ -161,16 +165,12 @@
         ul.append(li);
       }
       card.append(ul, line('verdict__small', 'Come see us to collect'));
-    } else if (!winners.length) {
-      card.append(
-        line('verdict__eyebrow', 'Nothing drawn yet'),
-        line('verdict__big', 'Hold tight'),
-        line('verdict__small', 'Check back once the draw is finished')
-      );
     } else {
+      // Final, not provisional. The results are already complete by the time
+      // anyone is typing into this box.
       card.append(
         line('verdict__eyebrow', 'Not on the board'),
-        line('verdict__big', 'No win'),
+        line('verdict__big', 'Not this time'),
         line('verdict__small', 'Thanks for supporting the night')
       );
     }

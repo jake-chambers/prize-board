@@ -1,45 +1,4 @@
 {
-  "publishedAt": "2026-09-11T00:41:29.380Z",
-  "winners": [
-    {
-      "prize": "1",
-      "ticket": "123"
-    },
-    {
-      "prize": "2",
-      "ticket": "456"
-    },
-    {
-      "prize": "3",
-      "ticket": "123"
-    },
-    {
-      "prize": "4",
-      "ticket": "938"
-    },
-    {
-      "prize": "5",
-      "ticket": "382"
-    },
-    {
-      "prize": "6",
-      "ticket": "123"
-    },
-    {
-      "prize": "7",
-      "ticket": "456"
-    },
-    {
-      "prize": "8",
-      "ticket": "59"
-    },
-    {
-      "prize": "9",
-      "ticket": "123"
-    },
-    {
-      "prize": "10",
-      "ticket": "123"
-    }
-  ]
+  "publishedAt": null,
+  "winners": []
 }
