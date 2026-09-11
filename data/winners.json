@@ -1,4 +1,401 @@
 {
-  "publishedAt": null,
-  "winners": []
+  "publishedAt": "2026-09-11T00:52:44.363Z",
+  "winners": [
+    {
+      "prize": "1",
+      "ticket": "486418"
+    },
+    {
+      "prize": "2",
+      "ticket": "406162"
+    },
+    {
+      "prize": "3",
+      "ticket": "339874"
+    },
+    {
+      "prize": "4",
+      "ticket": "120705"
+    },
+    {
+      "prize": "5",
+      "ticket": "970974"
+    },
+    {
+      "prize": "6",
+      "ticket": "392453"
+    },
+    {
+      "prize": "7",
+      "ticket": "381379"
+    },
+    {
+      "prize": "8",
+      "ticket": "139509"
+    },
+    {
+      "prize": "9",
+      "ticket": "815053"
+    },
+    {
+      "prize": "10",
+      "ticket": "482248"
+    },
+    {
+      "prize": "11",
+      "ticket": "888403"
+    },
+    {
+      "prize": "12",
+      "ticket": "313194"
+    },
+    {
+      "prize": "13",
+      "ticket": "378295"
+    },
+    {
+      "prize": "14",
+      "ticket": "753809"
+    },
+    {
+      "prize": "15",
+      "ticket": "852077"
+    },
+    {
+      "prize": "16",
+      "ticket": "303900"
+    },
+    {
+      "prize": "17",
+      "ticket": "441563"
+    },
+    {
+      "prize": "18",
+      "ticket": "896453"
+    },
+    {
+      "prize": "19",
+      "ticket": "715382"
+    },
+    {
+      "prize": "20",
+      "ticket": "958992"
+    },
+    {
+      "prize": "21",
+      "ticket": "548571"
+    },
+    {
+      "prize": "22",
+      "ticket": "941379"
+    },
+    {
+      "prize": "23",
+      "ticket": "577673"
+    },
+    {
+      "prize": "24",
+      "ticket": "596873"
+    },
+    {
+      "prize": "25",
+      "ticket": "637054"
+    },
+    {
+      "prize": "26",
+      "ticket": "828304"
+    },
+    {
+      "prize": "27",
+      "ticket": "816087"
+    },
+    {
+      "prize": "28",
+      "ticket": "822423"
+    },
+    {
+      "prize": "29",
+      "ticket": "246077"
+    },
+    {
+      "prize": "30",
+      "ticket": "563650"
+    },
+    {
+      "prize": "31",
+      "ticket": "604373"
+    },
+    {
+      "prize": "32",
+      "ticket": "722224"
+    },
+    {
+      "prize": "33",
+      "ticket": "615443"
+    },
+    {
+      "prize": "34",
+      "ticket": "262470"
+    },
+    {
+      "prize": "35",
+      "ticket": "684461"
+    },
+    {
+      "prize": "36",
+      "ticket": "783924"
+    },
+    {
+      "prize": "37",
+      "ticket": "738237"
+    },
+    {
+      "prize": "38",
+      "ticket": "643334"
+    },
+    {
+      "prize": "39",
+      "ticket": "986381"
+    },
+    {
+      "prize": "40",
+      "ticket": "868986"
+    },
+    {
+      "prize": "41",
+      "ticket": "988114"
+    },
+    {
+      "prize": "42",
+      "ticket": "563089"
+    },
+    {
+      "prize": "43",
+      "ticket": "698103"
+    },
+    {
+      "prize": "44",
+      "ticket": "443554"
+    },
+    {
+      "prize": "45",
+      "ticket": "919273"
+    },
+    {
+      "prize": "46",
+      "ticket": "536685"
+    },
+    {
+      "prize": "47",
+      "ticket": "558478"
+    },
+    {
+      "prize": "48",
+      "ticket": "438277"
+    },
+    {
+      "prize": "49",
+      "ticket": "228918"
+    },
+    {
+      "prize": "50",
+      "ticket": "386214"
+    },
+    {
+      "prize": "51",
+      "ticket": "583616"
+    },
+    {
+      "prize": "52",
+      "ticket": "564653"
+    },
+    {
+      "prize": "53",
+      "ticket": "879533"
+    },
+    {
+      "prize": "54",
+      "ticket": "802838"
+    },
+    {
+      "prize": "55",
+      "ticket": "939934"
+    },
+    {
+      "prize": "56",
+      "ticket": "762865"
+    },
+    {
+      "prize": "57",
+      "ticket": "901452"
+    },
+    {
+      "prize": "58",
+      "ticket": "785453"
+    },
+    {
+      "prize": "59",
+      "ticket": "645504"
+    },
+    {
+      "prize": "60",
+      "ticket": "294005"
+    },
+    {
+      "prize": "61",
+      "ticket": "634963"
+    },
+    {
+      "prize": "62",
+      "ticket": "340769"
+    },
+    {
+      "prize": "63",
+      "ticket": "415449"
+    },
+    {
+      "prize": "64",
+      "ticket": "418261"
+    },
+    {
+      "prize": "65",
+      "ticket": "325582"
+    },
+    {
+      "prize": "66",
+      "ticket": "290876"
+    },
+    {
+      "prize": "67",
+      "ticket": "966835"
+    },
+    {
+      "prize": "68",
+      "ticket": "819824"
+    },
+    {
+      "prize": "69",
+      "ticket": "756167"
+    },
+    {
+      "prize": "70",
+      "ticket": "636432"
+    },
+    {
+      "prize": "71",
+      "ticket": "463829"
+    },
+    {
+      "prize": "72",
+      "ticket": "749176"
+    },
+    {
+      "prize": "73",
+      "ticket": "885156"
+    },
+    {
+      "prize": "74",
+      "ticket": "566287"
+    },
+    {
+      "prize": "75",
+      "ticket": "314862"
+    },
+    {
+      "prize": "76",
+      "ticket": "353887"
+    },
+    {
+      "prize": "77",
+      "ticket": "161515"
+    },
+    {
+      "prize": "78",
+      "ticket": "487663"
+    },
+    {
+      "prize": "79",
+      "ticket": "230107"
+    },
+    {
+      "prize": "80",
+      "ticket": "760167"
+    },
+    {
+      "prize": "81",
+      "ticket": "703861"
+    },
+    {
+      "prize": "82",
+      "ticket": "274907"
+    },
+    {
+      "prize": "83",
+      "ticket": "309808"
+    },
+    {
+      "prize": "84",
+      "ticket": "649155"
+    },
+    {
+      "prize": "85",
+      "ticket": "963740"
+    },
+    {
+      "prize": "86",
+      "ticket": "799431"
+    },
+    {
+      "prize": "87",
+      "ticket": "361796"
+    },
+    {
+      "prize": "88",
+      "ticket": "344305"
+    },
+    {
+      "prize": "89",
+      "ticket": "341189"
+    },
+    {
+      "prize": "90",
+      "ticket": "908578"
+    },
+    {
+      "prize": "91",
+      "ticket": "840025"
+    },
+    {
+      "prize": "92",
+      "ticket": "489191"
+    },
+    {
+      "prize": "93",
+      "ticket": "784496"
+    },
+    {
+      "prize": "94",
+      "ticket": "567005"
+    },
+    {
+      "prize": "95",
+      "ticket": "954998"
+    },
+    {
+      "prize": "96",
+      "ticket": "448688"
+    },
+    {
+      "prize": "97",
+      "ticket": "185437"
+    },
+    {
+      "prize": "98",
+      "ticket": "860546"
+    },
+    {
+      "prize": "99",
+      "ticket": "831717"
+    }
+  ]
 }
