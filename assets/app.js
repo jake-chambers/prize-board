@@ -99,6 +99,9 @@
     // Nothing published means nothing to look up. Hiding the box is kinder
     // than letting someone type their ticket in and get a non-answer.
     if (el.checker) el.checker.hidden = winners.length === 0;
+    // "Check your ticket number below" makes no sense with no box below it.
+    const sub = $('subtitle');
+    if (sub) sub.hidden = winners.length === 0;
 
     if (el.state) {
       el.state.classList.remove('state--error');

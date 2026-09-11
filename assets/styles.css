@@ -118,7 +118,7 @@ body{
 
 /* ── Ticket checker ─────────────────────────────────────────── */
 .checker{ text-align:center; }
-.checker[hidden]{ display:none; }
+.checker[hidden], .masthead__sub[hidden]{ display:none; }
 
 .checker__label{
   display:block;
