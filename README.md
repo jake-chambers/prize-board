@@ -188,20 +188,34 @@ night. Call it 43 KB per person, one time.
 — roughly 0.01% of the allowance. Not a consideration.
 
 **The Google endpoint.** This is the only part under real load, so it was
-load-tested directly: 150 requests at 25 concurrent, then 200 requests at 50
-concurrent, all from a single IP (the venue-wifi case, where hundreds of
-guests share one public address). **All 350 returned HTTP 200**, median 240 ms,
-p95 300 ms. No throttling, no 429s.
+tested directly against the live sheet. Google *does* rate-limit it, and what
+triggers the limit is **bursts of simultaneous connections, not throughput**:
 
-Three things keep the sustained rate far below that anyway:
+| Load pattern (single IP) | Rate-limited |
+|---|---|
+| 25 concurrent | 0 of 200 |
+| 50 concurrent | 14 of 200 |
+| 200 concurrent | **117 of 200 (58%)** |
+| 10 req/s sustained, 30s | 0 of 300 |
+| 20 req/s sustained, 30s | 0 of 600 |
+| 33 req/s sustained, 30s | 2 of 990 (0.2%) |
 
-- Polling **pauses entirely when the page isn't visible**. Guests check the
-  board and pocket the phone; a backgrounded tab makes no requests at all.
-  Realistically only a fraction of the room is polling at any moment.
-- The interval is **jittered ±15%**, so a crowd that all scanned the QR at the
-  same moment doesn't stay locked into one synchronised spike every 30s.
-- Repeated failures **back off exponentially** up to 8×, so a struggling
-  endpoint doesn't get hammered by every phone at once.
+33 req/s is 1000 guests on a 30-second poll, worst case where every phone is
+awake *and* behind one public IP. Paced across each second that is effectively
+clean; fired all at once it is not. So the defences that matter are the ones
+that spread the crowd out, not the ones that reduce the rate:
+
+- Polling **pauses entirely when the page isn't visible**. A backgrounded tab
+  makes no requests, so only a fraction of the room is ever polling.
+- The interval is **jittered ±30%**, so a crowd that all scanned the QR in the
+  same minute does not stay locked into one synchronised burst.
+- A failed read of the sheet is **retried once after a short random delay**
+  before falling back, which absorbs a transient burst limit invisibly.
+- Repeated failures **back off exponentially** up to 8×.
+
+Guests arrive on many different IPs (cellular), where per-IP limits don't
+apply at all. The single-IP numbers above are the venue-wifi-NAT case — the
+harsh end, and the right one to size for.
 
 **If Google throttles anyway**, the board degrades instead of breaking: phones
 keep showing the last board they loaded, labelled `Saved board from … ·

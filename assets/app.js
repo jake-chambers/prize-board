@@ -170,6 +170,8 @@
 
   /* ── Fetch ───────────────────────────────────────────────── */
 
+  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
   async function pull(src) {
     const url = new URL(src, location.href);
     url.searchParams.set('_', Date.now());          // defeat any intermediate cache
@@ -201,18 +203,31 @@
       let rows = null, used = -1;
 
       for (let i = 0; i < SOURCES.length; i++) {
-        try {
-          const got = await pull(SOURCES[i]);
-          // A backup that comes back empty must never replace a board we
-          // already have — that's what a rate-limited sheet would cause.
-          if (i > 0 && got.length === 0 && winners.length > 0) {
-            throw new Error('backup is empty; keeping the board already loaded');
+        // The sheet rate-limits on bursts of simultaneous connections, and a
+        // crowd all opening the page at once is exactly that. One quick retry
+        // absorbs it; the delay is randomised so retries don't re-cluster.
+        const attempts = i === 0 ? 2 : 1;
+
+        for (let n = 0; n < attempts; n++) {
+          try {
+            if (n > 0) await wait(600 + Math.random() * 800);
+            const got = await pull(SOURCES[i]);
+
+            // An empty answer from a *backup* is never authoritative. The
+            // primary failing and the backup being empty does not mean "no
+            // winners" — it means we don't know, and saying "no winners yet"
+            // to someone whose ticket just won is worse than saying nothing.
+            if (i > 0 && got.length === 0) {
+              throw new Error('backup is empty; not authoritative');
+            }
+            rows = got; used = i;
+            break;
+          } catch (err) {
+            console.warn(`[prize-board] source ${i} attempt ${n + 1} (${SOURCES[i]}) failed:`,
+                         err.message);
           }
-          rows = got; used = i;
-          break;
-        } catch (err) {
-          console.warn(`[prize-board] source ${i} (${SOURCES[i]}) failed:`, err.message);
         }
+        if (rows) break;
       }
 
       if (rows) {
@@ -252,7 +267,9 @@
     clearTimeout(timer);
     const base    = Math.max(5, CFG.refreshSeconds) * 1000;
     const backoff = Math.min(2 ** failures, 8);       // up to 8x on repeated failure
-    const jitter  = 0.85 + Math.random() * 0.3;       // ±15%
+    // ±30%. Bursts of simultaneous connections are what gets rate-limited,
+    // not throughput, so spreading the crowd out matters more than the rate.
+    const jitter  = 0.7 + Math.random() * 0.6;
     timer = setTimeout(() => {
       if (document.visibilityState === 'visible') load();
       else schedule();                                // stay idle, keep the chain alive
