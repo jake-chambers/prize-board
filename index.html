@@ -8,10 +8,7 @@
 <meta name="theme-color" content="#C0272D">
 <meta name="color-scheme" content="light only">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F6F0E1'/%3E%3Ctext x='16' y='24' font-size='24' text-anchor='middle' fill='%23C0272D'%3E%E2%98%85%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=4">
+<link rel="stylesheet" href="assets/styles.css?v=5">
 </head>
 <body>
 <div class="grain" aria-hidden="true"></div>
@@ -49,22 +46,20 @@
 
     <div class="board__body">
       <ol id="rows" class="rows" aria-live="polite"></ol>
-      <p id="state" class="state">Loading the board…</p>
+      <p id="state" class="state">Results go up here as soon as the draw is finished.</p>
     </div>
   </section>
 
   <footer class="foot">
     <div class="rule rule--double"></div>
-    <p class="foot__status">
-      <span id="stamp">—</span>
-      <button id="refresh" type="button" class="foot__refresh">Refresh now</button>
-    </p>
-    <p class="foot__note">This page updates on its own. Leave it open.</p>
+    <p class="foot__status"><span id="stamp">—</span></p>
+    <p class="foot__note">Congratulations to every winner — and thanks for coming out.</p>
   </footer>
 
 </main>
 
-<script src="config.js?v=4"></script>
-<script src="assets/app.js?v=4"></script>
+<script src="config.js?v=5"></script>
+<script src="winners.js"></script>
+<script src="assets/app.js?v=5"></script>
 </body>
 </html>
